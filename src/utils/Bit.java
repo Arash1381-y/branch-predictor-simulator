@@ -1,4 +1,4 @@
-package predictors;
+package utils;
 
 public enum Bit {
     ZERO(false),
