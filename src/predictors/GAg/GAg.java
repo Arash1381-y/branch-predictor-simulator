@@ -5,6 +5,8 @@ import predictors.Predictor;
 import utils.Bit;
 import utils.BranchPredicationResult;
 
+import java.util.Arrays;
+
 public class GAg implements Predictor {
 
     private final Register BHR; // branch history register
@@ -40,7 +42,7 @@ public class GAg implements Predictor {
         Bit[] BHRValue = BHR.read();
 
         // Get the associated block with the current value of the BHR register from the PHT
-        Bit[] cacheBlock = PHT.getOrDefault(BHRValue, null);
+        Bit[] cacheBlock = PHT.getOrDefault(BHRValue, getDefaultBlock());
 
         // load the block into the counter
         SC.load(cacheBlock);
@@ -67,5 +69,11 @@ public class GAg implements Predictor {
 
         // update global history
         BHR.insertBit(isTaken ? Bit.ONE : Bit.ZERO);
+    }
+
+    private Bit[] getDefaultBlock() {
+        Bit[] defaultBlock = new Bit[SC.len()];
+        Arrays.fill(defaultBlock, Bit.ZERO);
+        return defaultBlock;
     }
 }
