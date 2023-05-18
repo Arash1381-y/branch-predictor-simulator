@@ -69,6 +69,22 @@ public class PageHistoryTable implements Cache<Bit[], Bit[]> {
     }
 
     /**
+     * put the value in the entry if the entry is not associated to any block.
+     *
+     * @param entry the address which is selected to put the data in it
+     * @param value the data which is saved in address (key) if the key is not mapped to any not-null data
+     */
+    @Override
+    public void putIfAbsent(Bit[] entry, Bit[] value) {
+        Bit[] block = get(entry);
+
+        // If the entry is not found in the cache, insert the default value and return it
+        if (block == null) {
+            put(entry, Arrays.copyOf(value, nColumns));
+        }
+    }
+
+    /**
      * Returns the value associated with the given key, or a default value if the key is not found in the cache.
      * If the key is not found in the cache, the default value is inserted into the cache.
      *
@@ -76,20 +92,11 @@ public class PageHistoryTable implements Cache<Bit[], Bit[]> {
      * @param defaultValue the default value to insert into the cache if the key is not found
      * @return the value associated with the key, or the default value if the key is not found
      */
-    public Bit[] getOrDefault(Bit[] entry, Bit[] defaultValue) {
+    public Bit[] setDefault(Bit[] entry, Bit[] defaultValue) {
         if (defaultValue == null) throw new RuntimeException("block can not be null");
 
-        Bit[] block = get(entry);
-
-        // If the entry is not found in the cache, insert the default value and return it
-        if (block == null) {
-            put(entry, Arrays.copyOf(defaultValue, nColumns));
-            return get(entry);
-        }
-        // Otherwise, return the value associated with the entry
-        else {
-            return block;
-        }
+        putIfAbsent(entry, defaultValue);
+        return get(entry);
     }
 
     /**
