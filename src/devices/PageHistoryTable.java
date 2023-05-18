@@ -1,7 +1,7 @@
 package devices;
 
 /*
- * our page History Tale
+ * our page History Table
  * read below assumptions about pre-defined PHT
  * ------------------------------------------------------
  * ASSUMPTIONS:
@@ -38,6 +38,37 @@ public class PageHistoryTable implements Cache<Bit[], Bit[]> {
 
 
     /**
+     * Get the value associated with the given key from the cache, or a default value if the key is not found.
+     *
+     * @param entry the key to look up in the cache
+     * @return the value associated with the key, or null if the key is not found
+     */
+    @Override
+    public Bit[] get(Bit[] entry) {
+        // Convert the entry array to a string and use it as the key for PHT.getOrDefault()
+        return PHT.get(Bit.bitArrayToString(entry));
+    }
+
+    /**
+     * Insert a new key-value pair into the cache.
+     *
+     * @param entry the key to insert into the cache
+     * @param value the value to associate with the key
+     * @throws RuntimeException if the length of the block is not equal to nColumns
+     */
+    @Override
+    public void put(Bit[] entry, Bit[] value) {
+        // Check that the length of the block is equal to nColumns
+        if (value.length != nColumns) {
+            throw new RuntimeException("invalid number of bits for cache block");
+        }
+
+        // Convert the entry array to a string and use it as the key for PHT.put()
+        String entryS = Bit.bitArrayToString(entry);
+        PHT.put(entryS, Arrays.copyOf(value, nColumns));
+    }
+
+    /**
      * Returns the value associated with the given key, or a default value if the key is not found in the cache.
      * If the key is not found in the cache, the default value is inserted into the cache.
      *
@@ -59,37 +90,6 @@ public class PageHistoryTable implements Cache<Bit[], Bit[]> {
         else {
             return block;
         }
-    }
-
-    /**
-     * Get the value associated with the given key from the cache, or a default value if the key is not found.
-     *
-     * @param entry the key to look up in the cache
-     * @return the value associated with the key, or null if the key is not found
-     */
-    @Override
-    public Bit[] get(Bit[] entry) {
-        // Convert the entry array to a string and use it as the key for PHT.getOrDefault()
-        return PHT.getOrDefault(Bit.bitArrayToString(entry), null);
-    }
-
-    /**
-     * Insert a new key-value pair into the cache.
-     *
-     * @param entry the key to insert into the cache
-     * @param value the value to associate with the key
-     * @throws RuntimeException if the length of the block is not equal to nColumns
-     */
-    @Override
-    public void put(Bit[] entry, Bit[] value) {
-        // Check that the length of the block is equal to nColumns
-        if (value.length != nColumns) {
-            throw new RuntimeException("invalid number of bits for cache block");
-        }
-
-        // Convert the entry array to a string and use it as the key for PHT.put()
-        String entryS = Bit.bitArrayToString(entry);
-        PHT.put(entryS, Arrays.copyOf(value, nColumns));
     }
 
     /**
