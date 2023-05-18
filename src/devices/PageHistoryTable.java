@@ -20,18 +20,20 @@ import utils.Bit;
 
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.Map;
+import java.util.TreeMap;
 
 public class PageHistoryTable implements Cache<Bit[], Bit[]> {
 
     private final int nRows; // number of PHT entries
     private final int nColumns; // number of bits in a block
-    private final HashMap<String, Bit[]> PHT; // save entry and blocks
+    private final Map<String, Bit[]> PHT; // save entry and blocks
 
 
     public PageHistoryTable(int nRows, int nColumns) {
         this.nRows = nRows;
         this.nColumns = nColumns;
-        this.PHT = new HashMap<>();
+        this.PHT = new TreeMap<>();
     }
 
 
@@ -88,9 +90,6 @@ public class PageHistoryTable implements Cache<Bit[], Bit[]> {
         // Convert the entry array to a string and use it as the key for PHT.put()
         String entryS = Bit.bitArrayToString(entry);
         PHT.put(entryS, Arrays.copyOf(value, nColumns));
-
-        System.out.println(monitor());
-
     }
 
     /**
@@ -109,16 +108,17 @@ public class PageHistoryTable implements Cache<Bit[], Bit[]> {
     @Override
     public String monitor() {
         StringBuilder sb = new StringBuilder();
+        sb.append("+-----------------------------------+\n");
         sb.append(String.format("| %-20s | %-10s |\n", "Address", "Block"));
-        sb.append("|-----------------|--------------------|\n");
+        sb.append("|----------------------|------------|\n");
 
-        // Iterate over the entries in the PHT and print out a row for each entry
         for (HashMap.Entry<String, Bit[]> entry : PHT.entrySet()) {
             String address = entry.getKey();
             Bit[] block = entry.getValue();
-            // Use the substring method to get the last 16 characters of the address string
             String address16 = address.substring(Math.max(address.length() - 16, 0));
             sb.append(String.format("| %-20s | %-10s |\n", address16, Bit.bitArrayToString(block)));
+            sb.append("+-----------------------------------+\n");
+
         }
 
         return sb.toString();
