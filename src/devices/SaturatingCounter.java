@@ -3,6 +3,17 @@ package devices;
 /*
  * our saturation counter model
  * read below assumption about pre-defined Register
+ * ASSUMPTIONS:
+ * 1) in real implementation the incrementing logic is implemented using a
+ * combination logic shared with all the block of the PHT. For the sake of
+ * readability, the saturation counter is seperated from the PHT in this code
+ * the load and read from this register do not need any clock in real implementation
+ *
+ * 2) after reading a data from the PHT cache remember to add the read value to
+ * the saturating counter using the `load` method.
+ *
+ * 3) the insert function of this class works like a counter if 1 is given it
+ * will increment it values and if 0 is given then the value is decremented.
  */
 
 import utils.Bit;
