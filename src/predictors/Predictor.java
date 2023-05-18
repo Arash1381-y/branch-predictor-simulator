@@ -3,8 +3,9 @@ package predictors;
 
 import utils.Bit;
 import utils.BranchResult;
+import utils.Monitor;
 
-public interface Predictor {
+public interface Predictor extends Monitor {
 
     /**
      * Predict if the branch is taken or not

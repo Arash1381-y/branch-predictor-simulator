@@ -84,4 +84,9 @@ public class GAg implements Predictor {
         Arrays.fill(defaultBlock, Bit.ZERO);
         return defaultBlock;
     }
+
+    @Override
+    public String monitor() {
+        return "GAg predictor snapshot: \n" + BHR.monitor() + SC.monitor() + PHT.monitor();
+    }
 }
