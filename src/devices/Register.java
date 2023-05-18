@@ -11,6 +11,8 @@ public interface Register extends Monitor {
 
     public Bit[] read();
 
+    public void load(Bit[] bits);
+
     public void insertBit(Bit bit);
 
     public void clear();

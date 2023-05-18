@@ -1,7 +1,7 @@
 package devices;
 
 /*
- * our Register Model
+ * our serial in, parallel out register Model
  * read below assumption about pre-defined Register
  * ------------------------------------------------------
  * ASSUMPTIONS
@@ -25,13 +25,13 @@ import java.util.Arrays;
 public class SerialInParallelOutRegister implements Register {
     private final Bit[] register;
     private final int size;
-
     public final String name;
 
     /**
      * Creates a new register with the specified size and default value.
      * If default_value is null, the register is zero-filled by default.
      *
+     * @param name         the register name
      * @param size         the size of the register
      * @param defaultValue the default value to initialize the register with
      */
@@ -54,6 +54,16 @@ public class SerialInParallelOutRegister implements Register {
     }
 
     /**
+     * load data into register
+     *
+     * @param bits data to be load in register
+     */
+    @Override
+    public void load(Bit[] bits) {
+        if (size >= 0) System.arraycopy(bits, 0, register, 0, size);
+    }
+
+    /**
      * Inserts a new bit at the beginning of the register and shifts all existing bits
      * to the right. The new bit is represented using a Bit enum.
      *
@@ -68,6 +78,7 @@ public class SerialInParallelOutRegister implements Register {
         // Insert the new bit at the beginning of the register
         this.register[0] = bit;
     }
+
 
     /**
      * clear the register and set teh register value to 0
