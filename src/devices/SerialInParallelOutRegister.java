@@ -19,29 +19,38 @@ package devices;
 
 
 import utils.Bit;
-import utils.Monitor;
 
-public class SerialInParallelOutRegister implements Register, Monitor {
+import java.util.Arrays;
+
+public class SerialInParallelOutRegister implements Register {
     private final Bit[] register;
     private final int size;
+
+    public final String name;
 
     /**
      * Creates a new register with the specified size and default value.
      * If default_value is null, the register is zero-filled by default.
      *
-     * @param size          the size of the register
-     * @param default_value the default value to initialize the register with
+     * @param size         the size of the register
+     * @param defaultValue the default value to initialize the register with
      */
-    public SerialInParallelOutRegister(int size, Bit[] default_value) {
+    public SerialInParallelOutRegister(String name, int size, Bit[] defaultValue) {
+        this.name = name;
         this.size = size;
         this.register = new Bit[size];
-        if (default_value == null) {
+        if (defaultValue == null) {
             // fill all the register with zero values
             clear();
         } else {
             // fill all the register with default value
-            System.arraycopy(default_value, 0, this.register, 0, size);
+            System.arraycopy(Arrays.copyOf(defaultValue, size), 0, this.register, 0, size);
         }
+    }
+
+    @Override
+    public Bit[] read() {
+        return Arrays.copyOf(register, size);
     }
 
     /**
@@ -65,7 +74,7 @@ public class SerialInParallelOutRegister implements Register, Monitor {
      */
     @Override
     public void clear() {
-        for (int i = 0; i < this.size; i++){
+        for (int i = 0; i < this.size; i++) {
             this.register[i] = Bit.ZERO;
         }
     }
@@ -82,6 +91,16 @@ public class SerialInParallelOutRegister implements Register, Monitor {
             sb.append((bit.getValue()) ? "1" : "0");
         }
         return sb.toString();
+    }
+
+    // simple test
+    public static void main(String[] args) {
+        Register r = new SerialInParallelOutRegister("t", 4, new Bit[]{Bit.ZERO, Bit.ONE, Bit.ZERO, Bit.ZERO});
+        Bit[] data = r.read();
+        System.out.println(Arrays.toString(data));
+        r.insertBit(Bit.ONE);
+        data = r.read();
+        System.out.println(Arrays.toString(data));
     }
 }
 
