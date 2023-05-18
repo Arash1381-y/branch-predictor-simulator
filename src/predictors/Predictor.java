@@ -18,9 +18,10 @@ public interface Predictor extends Monitor {
     /**
      * The dynamic predictor will update its states based on the new data
      *
+     * @param branchAddress the branch address
      * @param actual the actual result of branch (Taken or Not)
      */
-    void update(BranchResult actual);
+    void update(Bit[] branchAddress, BranchResult actual);
 
     /**
      * despite the other methods, this function shows the passage of time. i.e. the result of branch is

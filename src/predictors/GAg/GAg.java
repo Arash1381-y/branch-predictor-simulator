@@ -57,7 +57,7 @@ public class GAg implements Predictor {
      * @param actual the actual result of the branch condition
      */
     @Override
-    public void update(BranchResult actual) {
+    public void update(Bit[] branchAddress, BranchResult actual) {
         // check the predication result
         boolean isTaken = actual == BranchResult.TAKEN;
 
@@ -74,7 +74,7 @@ public class GAg implements Predictor {
     @Override
     public BranchResult predictAndUpdate(Bit[] PC, BranchResult actual) {
         BranchResult br = predict(PC);
-        update(actual);
+        update(PC, actual);
 
         return br;
     }
