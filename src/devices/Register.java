@@ -15,5 +15,7 @@ public interface Register extends Monitor {
 
     void insertBit(Bit bit);
 
+    int len();
+
     void clear();
 }

@@ -91,6 +91,11 @@ public class SaturatingCounter implements Register {
         load(bits);
     }
 
+    @Override
+    public int len() {
+        return register.length;
+    }
+
     /**
      * Resets the value of the saturating counter to its default value.
      */

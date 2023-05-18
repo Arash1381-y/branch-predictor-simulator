@@ -79,6 +79,11 @@ public class SerialInParallelOutRegister implements Register {
         this.register[0] = bit;
     }
 
+    @Override
+    public int len() {
+        return register.length;
+    }
+
 
     /**
      * clear the register and set teh register value to 0
