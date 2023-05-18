@@ -68,7 +68,7 @@ public class PageHistoryTable implements Cache<Bit[], Bit[]> {
     @Override
     public Bit[] get(Bit[] entry) {
         // Convert the entry array to a string and use it as the key for PHT.getOrDefault()
-        return PHT.getOrDefault(Arrays.toString(entry), null);
+        return PHT.getOrDefault(Bit.bitArrayToString(entry), null);
     }
 
     /**
@@ -86,8 +86,11 @@ public class PageHistoryTable implements Cache<Bit[], Bit[]> {
         }
 
         // Convert the entry array to a string and use it as the key for PHT.put()
-        String entryS = Arrays.toString(entry);
-        PHT.put(entryS, Arrays.copyOf(value, nRows));
+        String entryS = Bit.bitArrayToString(entry);
+        PHT.put(entryS, Arrays.copyOf(value, nColumns));
+
+        System.out.println(monitor());
+
     }
 
     /**
@@ -98,8 +101,26 @@ public class PageHistoryTable implements Cache<Bit[], Bit[]> {
         PHT.clear();
     }
 
+    /**
+     * Returns a string representation of the current state of the PHT.
+     *
+     * @return a table with the address and block data for each entry in the PHT
+     */
     @Override
     public String monitor() {
-        return null;
+        StringBuilder sb = new StringBuilder();
+        sb.append(String.format("| %-20s | %-10s |\n", "Address", "Block"));
+        sb.append("|-----------------|--------------------|\n");
+
+        // Iterate over the entries in the PHT and print out a row for each entry
+        for (HashMap.Entry<String, Bit[]> entry : PHT.entrySet()) {
+            String address = entry.getKey();
+            Bit[] block = entry.getValue();
+            // Use the substring method to get the last 16 characters of the address string
+            String address16 = address.substring(Math.max(address.length() - 16, 0));
+            sb.append(String.format("| %-20s | %-10s |\n", address16, Bit.bitArrayToString(block)));
+        }
+
+        return sb.toString();
     }
 }
