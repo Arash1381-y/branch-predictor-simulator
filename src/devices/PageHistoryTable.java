@@ -34,22 +34,66 @@ public class PageHistoryTable implements Cache<Bit[], Bit[]> {
         this.PHT = new HashMap<>();
     }
 
-    @Override
-    public Bit[] get(Bit[] key) {
-        return PHT.getOrDefault(Arrays.toString(key), null);
+
+    /**
+     * Returns the value associated with the given key, or a default value if the key is not found in the cache.
+     * If the key is not found in the cache, the default value is inserted into the cache.
+     *
+     * @param entry        the key to look up in the cache
+     * @param defaultValue the default value to insert into the cache if the key is not found
+     * @return the value associated with the key, or the default value if the key is not found
+     */
+    public Bit[] getOrDefault(Bit[] entry, Bit[] defaultValue) {
+        Bit[] saturateCounter = get(entry);
+
+        // If the entry is not found in the cache, insert the default value and return it
+        if (saturateCounter == null) {
+            put(entry, Arrays.copyOf(defaultValue, nColumns));
+            return get(entry);
+        }
+        // Otherwise, return the value associated with the entry
+        else {
+            return saturateCounter;
+        }
     }
 
+    /**
+     * Get the value associated with the given key from the cache, or a default value if the key is not found.
+     *
+     * @param entry the key to look up in the cache
+     * @return the value associated with the key, or null if the key is not found
+     */
     @Override
-    public void put(Bit[] key, Bit[] value) {
-        if (value.length != nColumns)
+    public Bit[] get(Bit[] entry) {
+        // Convert the entry array to a string and use it as the key for PHT.getOrDefault()
+        return PHT.getOrDefault(Arrays.toString(entry), null);
+    }
+
+    /**
+     * Insert a new key-value pair into the cache.
+     *
+     * @param entry           the key to insert into the cache
+     * @param saturateCounter the value to associate with the key
+     * @throws RuntimeException if the length of the saturateCounter array is not equal to nColumns
+     */
+    @Override
+    public void put(Bit[] entry, Bit[] saturateCounter) {
+        // Check that the length of the saturateCounter array is equal to nColumns
+        if (saturateCounter.length != nColumns) {
             throw new RuntimeException("invalid number of bits for saturate counter");
+        }
 
-        String entry = Arrays.toString(key);
-        PHT.put(entry, value);
+        // Convert the entry array to a string and use it as the key for PHT.put()
+        String entryS = Arrays.toString(entry);
+        PHT.put(entryS, saturateCounter);
     }
 
+    /**
+     * Clear all entries from the cache.
+     */
     @Override
     public void clear() {
         PHT.clear();
     }
+
 }
