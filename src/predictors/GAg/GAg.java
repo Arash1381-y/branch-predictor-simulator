@@ -42,7 +42,7 @@ public class GAg implements Predictor {
         Bit[] BHRValue = BHR.read();
 
         // Get the associated block with the current value of the BHR register from the PHT
-        Bit[] cacheBlock = PHT.getOrDefault(BHRValue, getDefaultBlock());
+        Bit[] cacheBlock = PHT.setDefault(BHRValue, getDefaultBlock());
 
         // load the block into the counter
         SC.load(cacheBlock);
