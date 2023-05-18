@@ -6,9 +6,9 @@ import utils.BranchPredicationResult;
 
 public interface Predictor {
 
-    public BranchPredicationResult predict(Bit[] PC);
+    BranchPredicationResult predict(Bit[] PC);
 
-    public void update(BranchPredicationResult actual);
+    void update(BranchPredicationResult actual);
 
 }
 

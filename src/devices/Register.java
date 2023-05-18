@@ -9,11 +9,11 @@ import utils.Monitor;
 
 public interface Register extends Monitor {
 
-    public Bit[] read();
+    Bit[] read();
 
-    public void load(Bit[] bits);
+    void load(Bit[] bits);
 
-    public void insertBit(Bit bit);
+    void insertBit(Bit bit);
 
-    public void clear();
+    void clear();
 }
