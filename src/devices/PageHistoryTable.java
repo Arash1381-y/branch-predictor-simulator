@@ -96,4 +96,8 @@ public class PageHistoryTable implements Cache<Bit[], Bit[]> {
         PHT.clear();
     }
 
+    @Override
+    public String monitor() {
+        return null;
+    }
 }

@@ -1,12 +1,14 @@
 package devices;
 
+import utils.Monitor;
+
 /*
 simple Cache interface
 
 read the functions documentation if anything is unclear
 
  */
-public interface Cache<K, V> {
+public interface Cache<K, V> extends Monitor {
     /**
      * @param key think of key as address
      * @return the value which is saved in that address or block
