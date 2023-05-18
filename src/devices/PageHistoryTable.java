@@ -7,9 +7,9 @@ package devices;
  * ASSUMPTIONS:
  * 1) the entry of the PHT is a # of bits which # is given as PHT initial param
  *
- * 2) each entry of the PHT is mapped to a #-bit saturate counter which # is given as PHT initial param
+ * 2) each entry of the PHT is mapped to a #-bit which shows the previous pattern of branches
  *
- * 3) when PHT is being read, the corresponding to saturate counter value will be return
+ * 3) when PHT is being read, the block associated to that address is returned
  *
  * 4) there is no checker if the in value of PHT is bigger than the cache last entry address
  * therefore be aware! your bug won't throw any error here
@@ -24,8 +24,8 @@ import java.util.HashMap;
 public class PageHistoryTable implements Cache<Bit[], Bit[]> {
 
     private final int nRows; // number of PHT entries
-    private final int nColumns; // number of saturn counters' bits
-    private final HashMap<String, Bit[]> PHT; // save entry and saturate counters in PHT.
+    private final int nColumns; // number of bits in a block
+    private final HashMap<String, Bit[]> PHT; // save entry and blocks
 
 
     public PageHistoryTable(int nRows, int nColumns) {
@@ -44,16 +44,18 @@ public class PageHistoryTable implements Cache<Bit[], Bit[]> {
      * @return the value associated with the key, or the default value if the key is not found
      */
     public Bit[] getOrDefault(Bit[] entry, Bit[] defaultValue) {
-        Bit[] saturateCounter = get(entry);
+        if (defaultValue == null) throw new RuntimeException("block can not be null");
+
+        Bit[] block = get(entry);
 
         // If the entry is not found in the cache, insert the default value and return it
-        if (saturateCounter == null) {
+        if (block == null) {
             put(entry, Arrays.copyOf(defaultValue, nColumns));
             return get(entry);
         }
         // Otherwise, return the value associated with the entry
         else {
-            return saturateCounter;
+            return block;
         }
     }
 
@@ -72,20 +74,20 @@ public class PageHistoryTable implements Cache<Bit[], Bit[]> {
     /**
      * Insert a new key-value pair into the cache.
      *
-     * @param entry           the key to insert into the cache
-     * @param saturateCounter the value to associate with the key
-     * @throws RuntimeException if the length of the saturateCounter array is not equal to nColumns
+     * @param entry the key to insert into the cache
+     * @param value the value to associate with the key
+     * @throws RuntimeException if the length of the block is not equal to nColumns
      */
     @Override
-    public void put(Bit[] entry, Bit[] saturateCounter) {
-        // Check that the length of the saturateCounter array is equal to nColumns
-        if (saturateCounter.length != nColumns) {
-            throw new RuntimeException("invalid number of bits for saturate counter");
+    public void put(Bit[] entry, Bit[] value) {
+        // Check that the length of the block is equal to nColumns
+        if (value.length != nColumns) {
+            throw new RuntimeException("invalid number of bits for cache block");
         }
 
         // Convert the entry array to a string and use it as the key for PHT.put()
         String entryS = Arrays.toString(entry);
-        PHT.put(entryS, saturateCounter);
+        PHT.put(entryS, Arrays.copyOf(value, nRows));
     }
 
     /**
