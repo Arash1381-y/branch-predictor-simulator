@@ -20,6 +20,16 @@ public interface Cache<K, V> {
     void put(K key, V value);
 
     /**
+     * helper function which calls get and put of the class to read and write, if needed, in the cache.
+     *
+     * @param key the address
+     * @param defaultValue default value if the address is not associated with any block in cache
+     * @return the value which is saved in the address. if the value is not set then write default value in cache
+     * and return it
+     */
+    V getOrDefault(K key, V defaultValue);
+
+    /**
      * clear the cache or simply remove all the entries
      */
     void clear();
