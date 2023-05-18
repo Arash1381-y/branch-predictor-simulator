@@ -21,6 +21,7 @@ package devices;
 import utils.Bit;
 
 import java.util.Arrays;
+import java.util.Collections;
 
 public class SerialInParallelOutRegister implements Register {
     private final Bit[] register;
@@ -103,9 +104,18 @@ public class SerialInParallelOutRegister implements Register {
      */
     public String monitor() {
         StringBuilder sb = new StringBuilder();
+        int registerWidth = this.register.length * 4; // each bit takes up 3 characters (1 for the border and 2 for the bit value and space)
+        int labelWidth = name.length(); // add 2 for the borders
+        int boxWidth = registerWidth + labelWidth + 2; // add 2 for the borders
+        int lastBarIndex = registerWidth + labelWidth;
+        String line = String.join("", Collections.nCopies(boxWidth, "-")); // create a line of dashes for the top and bottom borders
+        sb.append("+").append(line, 0, lastBarIndex + 2).append("+\n");
+        sb.append("|").append(name).append(" ");
         for (Bit bit : this.register) {
-            sb.append((bit.getValue()) ? "1" : "0");
+            sb.append(" | ").append(bit.getValue() ? "1" : "0");
         }
+        sb.append(" |\n");
+        sb.append("+").append(line, 0, lastBarIndex + 2).append("+\n");
         return sb.toString();
     }
 
