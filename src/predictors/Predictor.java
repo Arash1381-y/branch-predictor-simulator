@@ -2,13 +2,35 @@ package predictors;
 
 
 import utils.Bit;
-import utils.BranchPredicationResult;
+import utils.BranchResult;
 
 public interface Predictor {
 
-    BranchPredicationResult predict(Bit[] PC);
+    /**
+     * Predict if the branch is taken or not
+     *
+     * @param PC the program counter
+     * @return predicted result of branch
+     */
+    BranchResult predict(Bit[] PC);
 
-    void update(BranchPredicationResult actual);
+    /**
+     * The dynamic predictor will update its states based on the new data
+     *
+     * @param actual the actual result of branch (Taken or Not)
+     */
+    void update(BranchResult actual);
+
+    /**
+     * despite the other methods, this function shows the passage of time. i.e. the result of branch is
+     * not available at the time of predication. just a method to make a job a bit simpler
+     *
+     * @param PC     the program counter
+     * @param actual the result of branch
+     * @return the predication which is done by the dynamic predictor
+     */
+    BranchResult predictAndUpdate(Bit[] PC, BranchResult actual);
+
 
 }
 

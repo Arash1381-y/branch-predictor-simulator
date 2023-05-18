@@ -3,7 +3,7 @@ package predictors.GAg;
 import devices.*;
 import predictors.Predictor;
 import utils.Bit;
-import utils.BranchPredicationResult;
+import utils.BranchResult;
 
 import java.util.Arrays;
 
@@ -37,7 +37,7 @@ public class GAg implements Predictor {
      * @return the predicted outcome of the branch instruction (taken or not taken)
      */
     @Override
-    public BranchPredicationResult predict(Bit[] PC) {
+    public BranchResult predict(Bit[] PC) {
         // Read the current value of the BHR register
         Bit[] BHRValue = BHR.read();
 
@@ -48,7 +48,7 @@ public class GAg implements Predictor {
         SC.load(cacheBlock);
 
         // Return the predicted outcome of the branch instruction based on the value of the MSB
-        return cacheBlock[0].getValue() ? BranchPredicationResult.TAKEN : BranchPredicationResult.NOT_TAKEN;
+        return cacheBlock[0].getValue() ? BranchResult.TAKEN : BranchResult.NOT_TAKEN;
     }
 
     /**
@@ -57,9 +57,9 @@ public class GAg implements Predictor {
      * @param actual the actual result of the branch condition
      */
     @Override
-    public void update(BranchPredicationResult actual) {
+    public void update(BranchResult actual) {
         // check the predication result
-        boolean isTaken = actual == BranchPredicationResult.TAKEN;
+        boolean isTaken = actual == BranchResult.TAKEN;
 
         // update saturating counter
         SC.insertBit(isTaken ? Bit.ONE : Bit.ZERO);
@@ -69,6 +69,14 @@ public class GAg implements Predictor {
 
         // update global history
         BHR.insertBit(isTaken ? Bit.ONE : Bit.ZERO);
+    }
+
+    @Override
+    public BranchResult predictAndUpdate(Bit[] PC, BranchResult actual) {
+        BranchResult br = predict(PC);
+        update(actual);
+
+        return br;
     }
 
     private Bit[] getDefaultBlock() {
