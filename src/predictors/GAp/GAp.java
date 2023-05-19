@@ -60,7 +60,10 @@ public class GAp implements Predictor {
     @Override
     public BranchResult predictAndUpdate(Bit[] PC, BranchResult actual) {
         BranchResult br = predict(PC);
+        System.out.println("The predication is : " + br);
+        System.out.println("Before Update: \n" + monitor());
         update(PC, actual);
+        System.out.println("After Update: \n" + monitor());
 
         return br;
     }
@@ -88,8 +91,6 @@ public class GAp implements Predictor {
 
     @Override
     public String monitor() {
-        return null;
+        return "GAp predictor snapshot: \n" + BHR.monitor() + SC.monitor() + PAPHT.monitor();
     }
-
-
 }
