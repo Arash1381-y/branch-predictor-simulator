@@ -127,17 +127,6 @@ public class PerAddressPageHistoryTable implements Cache<Bit[], Bit[]> {
     }
 
 
-    public static void main(String[] args) {
-        Bit[] PC = new Bit[]{Bit.ZERO, Bit.ZERO, Bit.ZERO, Bit.ZERO};
-        Cache<Bit[], Bit[]> PAPHT = new PerAddressPageHistoryTable(2, 1024, 2);
-        PAPHT.setDefault(new Bit[]{Bit.ZERO, Bit.ZERO, Bit.ZERO, Bit.ZERO}, new Bit[]{Bit.ZERO, Bit.ONE});
-        PAPHT.setDefault(new Bit[]{Bit.ZERO, Bit.ONE, Bit.ZERO, Bit.ZERO}, new Bit[]{Bit.ONE, Bit.ONE});
-        PAPHT.setDefault(new Bit[]{Bit.ZERO, Bit.ONE, Bit.ZERO, Bit.ZERO}, new Bit[]{Bit.ZERO, Bit.ZERO});
-
-
-        System.out.println(PAPHT.monitor());
-    }
-
     /**
      * Clear all the caches.
      */
