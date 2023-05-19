@@ -1,7 +1,7 @@
 package devices;
 
 /*
- * our page History Table
+ * our Page History Table model
  * read below assumptions about pre-defined PHT
  * ------------------------------------------------------
  * ASSUMPTIONS:
@@ -9,10 +9,14 @@ package devices;
  *
  * 2) each entry of the PHT is mapped to a #-bit which shows the previous pattern of branches
  *
- * 3) when PHT is being read, the block associated to that address is returned
+ * 3) when PHT is being read, the block associated with that address is returned
  *
- * 4) there is no checker if the in value of PHT is bigger than the cache last entry address
- * therefore be aware! your bug won't throw any error here
+ * 4) the data (bit array) which is saved in the cache is not the data (bit array) that put or
+ * set default is used but a copy of it. this design is based on the fact that the outer components
+ * of cache can not manipulate the cache directly!
+ *
+ * 5) there is no checker if the in value of PHT entry is bigger than the cache last entry address.
+ * therefore, be aware! your bug won't throw any error here
  * -------------------------------------------------------
  */
 
@@ -88,7 +92,7 @@ public class PageHistoryTable implements Cache<Bit[], Bit[]> {
      * Returns the value associated with the given key, or a default value if the key is not found in the cache.
      * If the key is not found in the cache, the default value is inserted into the cache.
      *
-     * @param entry        the key to look up in the cache
+     * @param entry        the address to look up in the cache
      * @param defaultValue the default value to insert into the cache if the key is not found
      * @return the value associated with the key, or the default value if the key is not found
      */
@@ -115,16 +119,20 @@ public class PageHistoryTable implements Cache<Bit[], Bit[]> {
     @Override
     public String monitor() {
         StringBuilder sb = new StringBuilder();
-        sb.append("+-----------------------------------+\n");
-        sb.append(String.format("| %-20s | %-10s |\n", "Address", "Block"));
-        sb.append("|----------------------|------------|\n");
+        sb.append("+----------------------------------+\n");
+        sb.append(String.format("| %-19s | %-10s |\n", "Address", "Block"));
+        sb.append("|---------------------|------------|\n");
 
         for (HashMap.Entry<String, Bit[]> entry : PHT.entrySet()) {
             String address = entry.getKey();
             Bit[] block = entry.getValue();
-            String address16 = address.substring(Math.max(address.length() - 16, 0));
-            sb.append(String.format("| %-20s | %-10s |\n", address16, Bit.bitArrayToString(block)));
-            sb.append("+-----------------------------------+\n");
+            if (address.length() > 16) {
+                String address16 = address.substring(0, 16);
+                sb.append(String.format("| %-16s... | %-10s |\n", address16, Bit.bitArrayToString(block)));
+            } else {
+                sb.append(String.format("| %-19s | %-10s |\n", address, Bit.bitArrayToString(block)));
+            }
+            sb.append("+----------------------------------+\n");
 
         }
 
