@@ -84,14 +84,25 @@ public class GAs implements Predictor {
         return br;
     }
 
+    /**
+     *
+     * @return snapshot of caches and registers content
+     */
     public String monitor() {
         return "GAp predictor snapshot: \n" + BHR.monitor() + SC.monitor() + PSPHT.monitor();
     }
 
 
+    /**
+     * concat the PC and BHR to retrieve the desired address
+     *
+     * @param PC program counter
+     * @return concatenated value of first M bits of PC and BHR
+     */
     private Bit[] getCacheEntry(Bit[] PC) {
         // Get the PCMSize the least significant bits of the PC
         Bit[] pcmBits = Arrays.copyOfRange(PC, 0, PCMSize);
+        // get the hash value of PC in K bit
         Bit[] hashKSize = hash(pcmBits);
 
 
@@ -104,6 +115,12 @@ public class GAs implements Predictor {
         return cacheEntry;
     }
 
+    /**
+     * hash PC to a K bit value
+     *
+     * @param PC program counter
+     * @return hash value of fist M bits of PC in K bits
+     */
     private Bit[] hash(Bit[] PC) {
         Bit[] hash = new Bit[KSize];
 

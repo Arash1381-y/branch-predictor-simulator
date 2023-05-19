@@ -51,7 +51,7 @@ public class GAp implements Predictor {
      * Updates the value in the cache based on actual branch result
      *
      * @param branchAddress the address of the branch
-     * @param actual the actual result of branch (Taken or Not)
+     * @param actual        the actual result of branch (Taken or Not)
      */
     @Override
     public void update(Bit[] branchAddress, BranchResult actual) {
@@ -79,7 +79,12 @@ public class GAp implements Predictor {
         return br;
     }
 
-
+    /**
+     * concat the PC and BHR to retrieve the desired address
+     *
+     * @param PC program counter
+     * @return concatenated value of first M bits of PC and BHR
+     */
     private Bit[] getCacheEntry(Bit[] PC) {
         // Get the PCMSize the least significant bits of the PC
         Bit[] pcmBits = Arrays.copyOfRange(PC, 0, PCMSize);
@@ -99,9 +104,11 @@ public class GAp implements Predictor {
         return defaultBlock;
     }
 
-
+    /**
+     * @return snapshot of caches and registers content
+     */
     @Override
     public String monitor() {
-        return "GAp predictor snapshot: \n" + BHR.monitor() + SC.monitor() + PAPHT.monitor();
+        return "GAs predictor snapshot: \n" + BHR.monitor() + SC.monitor() + PAPHT.monitor();
     }
 }
