@@ -5,6 +5,19 @@ package devices;
  * read below assumptions about pre-defined PAPHT
  * ------------------------------------------------------
  * ASSUMPTIONS:
+ * 1) the entry of the PAPHT is a number of bits which the first # bits select the PHT and other bits select the block
+ * associated to the PHT
+ *
+ * 2) each entry of the PAPHT is mapped to a smaller cache (PHT)
+ *
+ * 3) when PAPHT is being read, the block associated with that address is returned
+ *
+ * 4) the data (bit array) which is saved in the cache is not the data (bit array) that put or
+ * set default is used but a copy of it. this design is based on the fact that the outer components
+ * of cache can not manipulate the cache directly!
+ *
+ * 5) there is no checker if the in value of PAPHT entry is bigger than the cache last entry address.
+ * therefore, be aware! your bug won't throw any error here
  * ------------------------------------------------------
  */
 

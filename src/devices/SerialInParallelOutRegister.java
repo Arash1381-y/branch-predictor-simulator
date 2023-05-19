@@ -14,6 +14,8 @@ package devices;
  *
  * 3) data of register can be read in parallel manner (pretty similar to serial-in parallel-out
  *  shift register)
+ *
+ * 4) use this model for general purpose registers like PC
  * -------------------------------------------------------
  */
 

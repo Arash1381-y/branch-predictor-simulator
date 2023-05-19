@@ -1,7 +1,7 @@
 package devices;
 
 /*
-Simple Register model with insert, clear and parallel read methods
+Simple Register model with insert, clear and parallel read and load.
  */
 
 import utils.Bit;

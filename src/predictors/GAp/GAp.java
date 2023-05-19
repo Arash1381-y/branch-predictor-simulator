@@ -26,7 +26,12 @@ public class GAp implements Predictor {
         SC = new SaturatingCounter(SCSize, null);
     }
 
-
+    /**
+     * predicts the result of a branch instruction based on the global branch history and PC
+     *
+     * @param PC the program counter
+     * @return the predicted outcome of the branch instruction (taken or not taken)
+     */
     @Override
     public BranchResult predict(Bit[] PC) {
         // get PAPHT entry by concatenating the PC and BHR
@@ -42,8 +47,14 @@ public class GAp implements Predictor {
         return cacheBlock[0].getValue() ? BranchResult.TAKEN : BranchResult.NOT_TAKEN;
     }
 
+    /**
+     * Updates the value in the cache based on actual branch result
+     *
+     * @param branchAddress the address of the branch
+     * @param actual the actual result of branch (Taken or Not)
+     */
     @Override
-    public void update(Bit[] PC, BranchResult actual) {
+    public void update(Bit[] branchAddress, BranchResult actual) {
         // check the predication result
         boolean isTaken = actual == BranchResult.TAKEN;
 
@@ -51,7 +62,7 @@ public class GAp implements Predictor {
         SC.insertBit(isTaken ? Bit.ONE : Bit.ZERO);
 
         // update the PAPHT
-        PAPHT.put(getCacheEntry(PC), SC.read());
+        PAPHT.put(getCacheEntry(branchAddress), SC.read());
 
         // update global history
         BHR.insertBit(isTaken ? Bit.ONE : Bit.ZERO);

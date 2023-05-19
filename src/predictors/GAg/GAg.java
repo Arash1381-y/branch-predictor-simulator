@@ -31,7 +31,7 @@ public class GAg implements Predictor {
     }
 
     /**
-     * Predicts the outcome of a branch instruction based on the current state of the GAg predictor.
+     * Predicts the result of a branch instruction based on the global branch history
      *
      * @param PC the program counter of the branch instruction
      * @return the predicted outcome of the branch instruction (taken or not taken)
@@ -52,8 +52,9 @@ public class GAg implements Predictor {
     }
 
     /**
-     * Updates the values in the cache based on the branch result
+     * Updates the values in the cache based on the actual branch result
      *
+     * @param branchAddress the address of the branch
      * @param actual the actual result of the branch condition
      */
     @Override
@@ -74,7 +75,10 @@ public class GAg implements Predictor {
     @Override
     public BranchResult predictAndUpdate(Bit[] PC, BranchResult actual) {
         BranchResult br = predict(PC);
+        System.out.println("The predication is : " + br);
+        System.out.println("Before Update: \n" + monitor());
         update(PC, actual);
+        System.out.println("After Update: \n" + monitor());
 
         return br;
     }
