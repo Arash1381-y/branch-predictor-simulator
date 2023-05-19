@@ -11,7 +11,7 @@ public class GAp implements Predictor {
     private final int PCMSize;
     private final Register SC; // saturating counter
     private final Register BHR; // branch history register
-    private final Cache<Bit[], Bit[]> PAPHT;
+    private final Cache<Bit[], Bit[]> PAPHT; // Per Address History Table
 
     public GAp(int BHRSize, int SCSize, int PCMSize) {
         this.PCMSize = PCMSize;
