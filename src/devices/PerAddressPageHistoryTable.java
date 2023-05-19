@@ -89,9 +89,8 @@ public class PerAddressPageHistoryTable implements Cache<Bit[], Bit[]> {
         if (PHT == null) {
             PHT = new PageHistoryTable(nRowsPerPHT, nColumnsPerBlock);
             PAPHT.put(cacheSelector, PHT);
-            PHT.putIfAbsent(blockSelector, value);
         }
-
+        PHT.putIfAbsent(blockSelector, value);
     }
 
     /**
