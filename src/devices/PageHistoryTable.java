@@ -50,7 +50,7 @@ public class PageHistoryTable implements Cache<Bit[], Bit[]> {
     @Override
     public Bit[] get(Bit[] entry) {
         // Convert the entry array to a string and use it as the key for PHT.getOrDefault()
-        return PHT.get(Bit.bitArrayToString(entry));
+        return PHT.get(Bit.arrayToString(entry));
     }
 
     /**
@@ -68,7 +68,7 @@ public class PageHistoryTable implements Cache<Bit[], Bit[]> {
         }
 
         // Convert the entry array to a string and use it as the key for PHT.put()
-        String entryS = Bit.bitArrayToString(entry);
+        String entryS = Bit.arrayToString(entry);
         PHT.put(entryS, Arrays.copyOf(value, nColumns));
     }
 
@@ -128,9 +128,9 @@ public class PageHistoryTable implements Cache<Bit[], Bit[]> {
             Bit[] block = entry.getValue();
             if (address.length() > 16) {
                 String address16 = address.substring(0, 16);
-                sb.append(String.format("| %-16s... | %-10s |\n", address16, Bit.bitArrayToString(block)));
+                sb.append(String.format("| %-16s... | %-10s |\n", address16, Bit.arrayToString(block)));
             } else {
-                sb.append(String.format("| %-19s | %-10s |\n", address, Bit.bitArrayToString(block)));
+                sb.append(String.format("| %-19s | %-10s |\n", address, Bit.arrayToString(block)));
             }
             sb.append("+----------------------------------+\n");
 

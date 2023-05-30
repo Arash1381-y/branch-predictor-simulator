@@ -126,7 +126,7 @@ public class PerAddressPageHistoryTable implements Cache<Bit[], Bit[]> {
      * @return the cache selector bits
      */
     private String getCacheSelector(Bit[] entry) {
-        return Bit.bitArrayToString(Arrays.copyOf(entry, nPCSelector));
+        return Bit.arrayToString(Arrays.copyOf(entry, nPCSelector));
     }
 
     /**
