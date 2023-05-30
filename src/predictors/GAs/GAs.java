@@ -1,18 +1,21 @@
 package predictors.GAs;
 
+
 import devices.*;
-import predictors.Predictor;
+import predictors.BranchInstruction;
+import predictors.BranchPredictor;
 import utils.Bit;
 import utils.BranchResult;
+import utils.CountMode;
 
 import java.util.Arrays;
 
-public class GAs implements Predictor {
+public class GAs implements BranchPredictor {
 
     private final int PCMSize;
     private final int KSize;
-    private final Register SC; // saturating counter
-    private final Register BHR; // branch history register
+    private final ShiftRegister SC; // saturating counter
+    private final ShiftRegister BHR; // branch history register
     private final Cache<Bit[], Bit[]> PSPHT; // Per Set Predication History Table
 
 
@@ -21,26 +24,28 @@ public class GAs implements Predictor {
         this.KSize = KSize;
 
         // Initialize the BHR register with the given size and null input
-        this.BHR = new SerialInParallelOutRegister("bhr", BHRSize, null);
+        this.BHR = new SIPORegister("bhr", BHRSize, null);
 
         // Initializing the PAPHT with PCMSize selector for PHT and 2^BHRSize row with SCSize as block size
         PSPHT = new PerAddressPageHistoryTable(KSize, (int) Math.pow(2, BHRSize), SCSize);
 
         // Initialize the saturating counter
-        SC = new SaturatingCounter(SCSize, null);
-
+        SC = new SIPORegister("sc", PCMSize, null);
     }
 
     /**
      * predicts the result of a branch instruction based on the global branch history and hash value of PC
      *
-     * @param PC the program counter
+     * @param branchInstruction the branch instruction
      * @return the predicted outcome of the branch instruction (taken or not taken)
      */
     @Override
-    public BranchResult predict(Bit[] PC) {
-        // get PAPHT entry by concatenating the PC and BHR
-        Bit[] cacheEntry = getCacheEntry(PC);
+    public BranchResult predict(BranchInstruction branchInstruction) {
+        // get branch address
+        Bit[] branchAddress = branchInstruction.getInstructionAddress();
+
+        // get PAPHT entry by concatenating the Branch address and BHR
+        Bit[] cacheEntry = getCacheEntry(branchAddress);
 
         // Get the associated block with the cacheEntry from the PSPHT
         Bit[] cacheBlock = PSPHT.setDefault(cacheEntry, getDefaultBlock());
@@ -55,37 +60,37 @@ public class GAs implements Predictor {
     /**
      * Updates the value in the cache based on actual branch result
      *
-     * @param branchAddress the address of the branch
-     * @param actual        the actual result of branch (Taken or Not)
+     * @param branchInstruction the branch instruction
+     * @param actual            the actual result of branch (Taken or Not)
      */
     @Override
-    public void update(Bit[] branchAddress, BranchResult actual) {
+    public void update(BranchInstruction branchInstruction, BranchResult actual) {
+        // get branch address
+        Bit[] branchAddress = branchInstruction.getInstructionAddress();
+
         // check the predication result
         boolean isTaken = actual == BranchResult.TAKEN;
 
         // update saturating counter
-        SC.insertBit(isTaken ? Bit.ONE : Bit.ZERO);
-
+        Bit[] nValue = CombinationalLogic.count(SC.read(), isTaken, CountMode.SATURATING);
         // update the PSPHT
-        PSPHT.put(getCacheEntry(branchAddress), SC.read());
+        PSPHT.put(getCacheEntry(branchAddress), nValue);
 
         // update global history
-        BHR.insertBit(isTaken ? Bit.ONE : Bit.ZERO);
+        BHR.insert(isTaken ? Bit.ONE : Bit.ZERO);
     }
 
-    @Override
-    public BranchResult predictAndUpdate(Bit[] PC, BranchResult actual) {
-        BranchResult br = predict(PC);
+    public BranchResult predictAndUpdate(BranchInstruction branchInstruction, BranchResult actual) {
+        BranchResult br = predict(branchInstruction);
         System.out.println("The predication is : " + br);
         System.out.println("Before Update: \n" + monitor());
-        update(PC, actual);
+        update(branchInstruction, actual);
         System.out.println("After Update: \n" + monitor());
 
         return br;
     }
 
     /**
-     *
      * @return snapshot of caches and registers content
      */
     public String monitor() {
@@ -139,8 +144,50 @@ public class GAs implements Predictor {
     }
 
     private Bit[] getDefaultBlock() {
-        Bit[] defaultBlock = new Bit[SC.len()];
+        Bit[] defaultBlock = new Bit[SC.getLength()];
         Arrays.fill(defaultBlock, Bit.ZERO);
         return defaultBlock;
+    }
+
+
+    public static void main(String[] args) {
+        GAs gas = new GAs(4, 2, 8, 5);
+
+        Bit[] opcode;
+        Bit[] instructionAddress;
+        Bit[] jumpAddress;
+
+        for (int i = 0; i < 250; i++) {
+
+
+            opcode = getRandomBitSerial(6);
+            instructionAddress = getRandomBitSerial(10);
+            jumpAddress = getRandomBitSerial(16);
+
+            BranchInstruction bi = new BranchInstruction(
+                    opcode,
+                    instructionAddress,
+                    jumpAddress
+            );
+
+            BranchResult br = getRandomBR();
+            System.out.println("PC value is: " + Bit.arrayToString(bi.getInstructionAddress()) + " Branch result is: " + br);
+            BranchResult r = gas.predictAndUpdate(bi, br);
+        }
+
+
+    }
+
+    private static Bit[] getRandomBitSerial(int size) {
+        Bit[] rPC = new Bit[size];
+        for (int i = 0; i < size; i++) {
+            Bit b = Math.random() > 0.5 ? Bit.ONE : Bit.ZERO;
+            rPC[i] = b;
+        }
+        return rPC;
+    }
+
+    private static BranchResult getRandomBR() {
+        return Math.random() < 0.75 ? BranchResult.TAKEN : BranchResult.NOT_TAKEN;
     }
 }

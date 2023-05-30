@@ -1,46 +1,56 @@
 package predictors.GAp;
 
 import devices.*;
-import predictors.Predictor;
+import predictors.BranchInstruction;
+import predictors.BranchPredictor;
 import utils.Bit;
 import utils.BranchResult;
+import utils.CountMode;
 
 import java.util.Arrays;
 
-public class GAp implements Predictor {
+public class GAp implements BranchPredictor {
     private final int PCMSize;
-    private final Register SC; // saturating counter
-    private final Register BHR; // branch history register
+    private final ShiftRegister SC; // saturating counter
+    private final ShiftRegister BHR; // branch history register
     private final Cache<Bit[], Bit[]> PAPHT; // Per Address History Table
 
-    public GAp(int BHRSize, int SCSize, int PCMSize) {
-        this.PCMSize = PCMSize;
+    /**
+     * Creates a new GAp predictor with the given BHR register size and initializes the PAPHT based on
+     * the selected number of PC (branch address).
+     *
+     * @param BHRSize       the size of the BHR register
+     * @param SCSize        the size of the register which hold the saturating counter value
+     * @param BranchAddress number bits which is used for saving a branch instruction
+     */
+    public GAp(int BHRSize, int SCSize, int BranchAddress) {
+        this.PCMSize = BranchAddress;
 
         // Initialize the BHR register with the given size and null input
-        this.BHR = new SerialInParallelOutRegister("bhr", BHRSize, null);
+        this.BHR = new SIPORegister("bhr", BHRSize, null);
 
         // Initializing the PAPHT with PCMSize selector for PHT and 2^BHRSize row with SCSize as block size
-        PAPHT = new PerAddressPageHistoryTable(PCMSize, (int) Math.pow(2, BHRSize), SCSize);
+        PAPHT = new PerAddressPageHistoryTable(BranchAddress, (int) Math.pow(2, BHRSize), SCSize);
 
-        // Initialize the saturating counter
-        SC = new SaturatingCounter(SCSize, null);
+        // Initialize the SC register
+        SC = new SIPORegister("sc", SCSize, null);
     }
 
     /**
-     * predicts the result of a branch instruction based on the global branch history and PC
+     * predicts the result of a branch instruction based on the global branch history and branch address
      *
-     * @param PC the program counter
+     * @param branchInstruction the branch instruction
      * @return the predicted outcome of the branch instruction (taken or not taken)
      */
     @Override
-    public BranchResult predict(Bit[] PC) {
-        // get PAPHT entry by concatenating the PC and BHR
-        Bit[] cacheEntry = getCacheEntry(PC);
+    public BranchResult predict(BranchInstruction branchInstruction) {
+        // get PAPHT entry by concatenating the branch address and BHR
+        Bit[] cacheEntry = getCacheEntry(branchInstruction.getInstructionAddress());
 
         // Get the associated block with the cacheEntry from the PAPHT
         Bit[] cacheBlock = PAPHT.setDefault(cacheEntry, getDefaultBlock());
 
-        // load the block into the counter
+        // load the block into the register
         SC.load(cacheBlock);
 
         // Return the predicted outcome of the branch instruction based on the value of the MSB
@@ -50,44 +60,46 @@ public class GAp implements Predictor {
     /**
      * Updates the value in the cache based on actual branch result
      *
-     * @param branchAddress the address of the branch
-     * @param actual        the actual result of branch (Taken or Not)
+     * @param branchInstruction the branch instruction
+     * @param actual            the actual result of branch (Taken or Not)
      */
     @Override
-    public void update(Bit[] branchAddress, BranchResult actual) {
+    public void update(BranchInstruction branchInstruction, BranchResult actual) {
+        // get branch address
+        Bit[] branchAddress = branchInstruction.getInstructionAddress();
+
         // check the predication result
         boolean isTaken = actual == BranchResult.TAKEN;
 
         // update saturating counter
-        SC.insertBit(isTaken ? Bit.ONE : Bit.ZERO);
+        Bit[] nValue = CombinationalLogic.count(SC.read(), isTaken, CountMode.SATURATING);
 
         // update the PAPHT
-        PAPHT.put(getCacheEntry(branchAddress), SC.read());
+        PAPHT.put(getCacheEntry(branchAddress), nValue);
 
         // update global history
-        BHR.insertBit(isTaken ? Bit.ONE : Bit.ZERO);
+        BHR.insert(isTaken ? Bit.ONE : Bit.ZERO);
     }
 
-    @Override
-    public BranchResult predictAndUpdate(Bit[] PC, BranchResult actual) {
-        BranchResult br = predict(PC);
+    public BranchResult predictAndUpdate(BranchInstruction branchInstruction, BranchResult actual) {
+        BranchResult br = predict(branchInstruction);
         System.out.println("The predication is : " + br);
         System.out.println("Before Update: \n" + monitor());
-        update(PC, actual);
+        update(branchInstruction, actual);
         System.out.println("After Update: \n" + monitor());
 
         return br;
     }
 
     /**
-     * concat the PC and BHR to retrieve the desired address
+     * concat the branch address and BHR to retrieve the desired address
      *
-     * @param PC program counter
-     * @return concatenated value of first M bits of PC and BHR
+     * @param branchAddress program counter
+     * @return concatenated value of first M bits of branch address and BHR
      */
-    private Bit[] getCacheEntry(Bit[] PC) {
-        // Get the PCMSize the least significant bits of the PC
-        Bit[] pcmBits = Arrays.copyOfRange(PC, 0, PCMSize);
+    private Bit[] getCacheEntry(Bit[] branchAddress) {
+        // Get the PCMSize the least significant bits of the branch address
+        Bit[] pcmBits = Arrays.copyOfRange(branchAddress, 0, PCMSize);
 
         // Concatenate the PCM bits with the BHR bits
         Bit[] bhrBits = BHR.read();
@@ -99,7 +111,7 @@ public class GAp implements Predictor {
     }
 
     private Bit[] getDefaultBlock() {
-        Bit[] defaultBlock = new Bit[SC.len()];
+        Bit[] defaultBlock = new Bit[SC.getLength()];
         Arrays.fill(defaultBlock, Bit.ZERO);
         return defaultBlock;
     }
@@ -109,6 +121,48 @@ public class GAp implements Predictor {
      */
     @Override
     public String monitor() {
-        return "GAs predictor snapshot: \n" + BHR.monitor() + SC.monitor() + PAPHT.monitor();
+        return "GAp predictor snapshot: \n" + BHR.monitor() + SC.monitor() + PAPHT.monitor();
+    }
+
+
+    public static void main(String[] args) {
+        GAp gap = new GAp(4, 2, 32);
+
+        Bit[] opcode;
+        Bit[] instructionAddress;
+        Bit[] jumpAddress;
+
+        for (int i = 0; i < 20; i++) {
+
+
+            opcode = getRandomBitSerial(6);
+            instructionAddress = getRandomBitSerial(32);
+            jumpAddress = getRandomBitSerial(26);
+
+            BranchInstruction bi = new BranchInstruction(
+                    opcode,
+                    instructionAddress,
+                    jumpAddress
+            );
+
+            BranchResult br = getRandomBR();
+            System.out.println("PC value is: " + Bit.arrayToString(bi.getInstructionAddress()) + " Branch result is: " + br);
+            BranchResult r = gap.predictAndUpdate(bi, br);
+        }
+
+
+    }
+
+    private static Bit[] getRandomBitSerial(int size) {
+        Bit[] rPC = new Bit[size];
+        for (int i = 0; i < size; i++) {
+            Bit b = Math.random() > 0.5 ? Bit.ONE : Bit.ZERO;
+            rPC[i] = b;
+        }
+        return rPC;
+    }
+
+    private static BranchResult getRandomBR() {
+        return Math.random() < 2 ? BranchResult.TAKEN : BranchResult.NOT_TAKEN;
     }
 }
