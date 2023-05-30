@@ -1,5 +1,5 @@
 package utils;
 
-public interface Monitor {
+public interface Monitorable {
     String monitor();
 }
