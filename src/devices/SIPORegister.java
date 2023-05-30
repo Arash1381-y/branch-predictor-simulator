@@ -1,7 +1,7 @@
 package devices;
 
 /*
- * our serial in, parallel out register Model
+ * our serial-in, parallel-out register Model
  * read below assumption about pre-defined Register
  * ------------------------------------------------------
  * ASSUMPTIONS
@@ -12,20 +12,18 @@ package devices;
  * the values to right and add the new bit to the first element of array
  * (think of it as queue first in -> first out)
  *
- * 3) data of register can be read in parallel manner (pretty similar to serial-in parallel-out
- *  shift register)
+ * 3) data of register can be read in parallel manner
  *
  * 4) use this model for general purpose registers like PC
  * -------------------------------------------------------
  */
-
 
 import utils.Bit;
 
 import java.util.Arrays;
 import java.util.Collections;
 
-public class SerialInParallelOutRegister implements Register {
+public class SIPORegister implements ShiftRegister {
     private final Bit[] register;
     private final int size;
     public final String name;
@@ -38,7 +36,7 @@ public class SerialInParallelOutRegister implements Register {
      * @param size         the size of the register
      * @param defaultValue the default value to initialize the register with
      */
-    public SerialInParallelOutRegister(String name, int size, Bit[] defaultValue) {
+    public SIPORegister(String name, int size, Bit[] defaultValue) {
         this.name = name;
         this.size = size;
         this.register = new Bit[size];
@@ -72,7 +70,7 @@ public class SerialInParallelOutRegister implements Register {
      *
      * @param bit the Bit enum representing the new bit to be inserted
      */
-    public void insertBit(Bit bit) {
+    public void insert(Bit bit) {
         // Shift all existing bits to the right by one position
         for (int i = this.register.length - 1; i > 0; i--) {
             this.register[i] = this.register[i - 1];
@@ -83,7 +81,7 @@ public class SerialInParallelOutRegister implements Register {
     }
 
     @Override
-    public int len() {
+    public int getLength() {
         return register.length;
     }
 
@@ -123,10 +121,10 @@ public class SerialInParallelOutRegister implements Register {
 
     // simple test
     public static void main(String[] args) {
-        Register r = new SerialInParallelOutRegister("t", 4, new Bit[]{Bit.ZERO, Bit.ONE, Bit.ZERO, Bit.ZERO});
+        ShiftRegister r = new SIPORegister("t", 4, new Bit[]{Bit.ZERO, Bit.ONE, Bit.ZERO, Bit.ZERO});
         Bit[] data = r.read();
         System.out.println(Arrays.toString(data));
-        r.insertBit(Bit.ONE);
+        r.insert(Bit.ONE);
         data = r.read();
         System.out.println(Arrays.toString(data));
     }
