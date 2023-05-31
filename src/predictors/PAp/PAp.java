@@ -17,7 +17,7 @@ public class PAp implements BranchPredictor {
 
     private final RegisterBank PABHR; // per address branch history register
 
-    private final Cache<Bit[], Bit[]> PAPHT; // Per Address History Table
+    private final Cache<Bit[], Bit[]> PAPHT; // Per Address Predication History Table
 
     public PAp(int BHRSize, int SCSize, int branchInstructionSize) {
         this.branchInstructionSize = branchInstructionSize;
