@@ -73,18 +73,6 @@ public class GAg implements BranchPredictor {
         BHR.insert(isTaken ? Bit.ONE : Bit.ZERO);
     }
 
-    public BranchResult predictAndUpdate(BranchInstruction branchInstruction, BranchResult actual, boolean debug) {
-        BranchResult br = predict(branchInstruction);
-        if (debug) {
-            System.out.println("The predication is : " + br);
-            System.out.println("Before Update: \n" + monitor());
-        }
-        update(branchInstruction, actual);
-        if (debug)
-            System.out.println("After Update: \n" + monitor());
-
-        return br;
-    }
 
     /**
      * @return a zero series of bits as default value of cache block
@@ -98,55 +86,5 @@ public class GAg implements BranchPredictor {
     @Override
     public String monitor() {
         return "GAg predictor snapshot: \n" + BHR.monitor() + SC.monitor() + PHT.monitor();
-    }
-
-
-    /*
-    Test Util
-
-    TODO: remove this section in final result
-     */
-    public static void main(String[] args) {
-        GAg gag = new GAg(4, 2);
-
-        Bit[] opcode;
-        Bit[] instructionAddress;
-        Bit[] jumpAddress;
-
-
-        for (int i = 0; i < 10000; i++) {
-
-            opcode = getRandomBitSerial(6);
-            instructionAddress = getRandomBitSerial(32);
-            jumpAddress = getRandomBitSerial(26);
-
-            BranchInstruction bi = new BranchInstruction(
-                    opcode,
-                    instructionAddress,
-                    jumpAddress
-            );
-
-            BranchResult br = getRandomBR();
-//            System.out.println("PC value is: " + Bit.arrayToString(bi.getInstructionAddress()) + " Branch result is: " + br);
-            BranchResult r = gag.predictAndUpdate(bi, br, false);
-        }
-
-
-        System.out.println(gag.monitor());
-
-
-    }
-
-    private static Bit[] getRandomBitSerial(int size) {
-        Bit[] rPC = new Bit[size];
-        for (int i = 0; i < size; i++) {
-            Bit b = Math.random() > 0.5 ? Bit.ONE : Bit.ZERO;
-            rPC[i] = b;
-        }
-        return rPC;
-    }
-
-    private static BranchResult getRandomBR() {
-        return Math.random() < 0.4 ? BranchResult.TAKEN : BranchResult.NOT_TAKEN;
     }
 }

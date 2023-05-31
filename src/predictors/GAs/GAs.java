@@ -12,7 +12,7 @@ import java.util.Arrays;
 
 public class GAs implements BranchPredictor {
 
-    private final int PCMSize;
+    private final int branchInstructionSize;
     private final int KSize;
     private final ShiftRegister SC; // saturating counter register
     private final ShiftRegister BHR; // branch history register
@@ -28,7 +28,7 @@ public class GAs implements BranchPredictor {
      * @param branchInstructionSize the number of bits which is used for saving a branch instruction
      */
     public GAs(int BHRSize, int SCSize, int branchInstructionSize, int KSize) {
-        this.PCMSize = branchInstructionSize;
+        this.branchInstructionSize = branchInstructionSize;
         this.KSize = KSize;
 
         // Initialize the BHR register with the given size and no default value
@@ -43,7 +43,8 @@ public class GAs implements BranchPredictor {
     }
 
     /**
-     * predicts the result of a branch instruction based on the global branch history and hash value of PC
+     * predicts the result of a branch instruction based on the global branch history and hash value of
+     * branch instruction address
      *
      * @param branchInstruction the branch instruction
      * @return the predicted outcome of the branch instruction (taken or not taken)
@@ -89,19 +90,6 @@ public class GAs implements BranchPredictor {
         BHR.insert(isTaken ? Bit.ONE : Bit.ZERO);
     }
 
-    public BranchResult predictAndUpdate(BranchInstruction branchInstruction, BranchResult actual, boolean debug) {
-        BranchResult br = predict(branchInstruction);
-        if (debug) {
-            System.out.println("The predication is : " + br);
-            System.out.println("Before Update: \n" + monitor());
-        }
-        update(branchInstruction, actual);
-        if (debug)
-            System.out.println("After Update: \n" + monitor());
-
-        return br;
-    }
-
     /**
      * @return snapshot of caches and registers content
      */
@@ -113,17 +101,14 @@ public class GAs implements BranchPredictor {
     /**
      * concat the PC and BHR to retrieve the desired address
      *
-     * @param PC program counter
-     * @return concatenated value of first M bits of PC and BHR
+     * @param branchAddress program counter
+     * @return concatenated value of first M bits of branch address and BHR
      */
-    private Bit[] getCacheEntry(Bit[] PC) {
-        // Get the PCMSize the least significant bits of the PC
-        Bit[] pcmBits = Arrays.copyOfRange(PC, 0, PCMSize);
-        // get the hash value of PC in K bit
-        Bit[] hashKSize = hash(pcmBits);
+    private Bit[] getCacheEntry(Bit[] branchAddress) {
+        // hash the branch address
+        Bit[] hashKSize = hash(branchAddress);
 
-
-        // Concatenate the Hash PCM bits with the BHR bits
+        // Concatenate the Hash bits with the BHR bits
         Bit[] bhrBits = BHR.read();
         Bit[] cacheEntry = new Bit[hashKSize.length + bhrBits.length];
         System.arraycopy(hashKSize, 0, cacheEntry, 0, hashKSize.length);
@@ -133,21 +118,21 @@ public class GAs implements BranchPredictor {
     }
 
     /**
-     * hash PC to a K bit value
+     * hash N bits to a K bit value
      *
-     * @param PC program counter
-     * @return hash value of fist M bits of PC in K bits
+     * @param bits program counter
+     * @return hash value of fist M bits of `bits` in K bits
      */
-    private Bit[] hash(Bit[] PC) {
+    private Bit[] hash(Bit[] bits) {
         Bit[] hash = new Bit[KSize];
 
         // XOR the first M bits of the PC to produce the hash
-        for (int i = 0; i < PCMSize; i++) {
+        for (int i = 0; i < branchInstructionSize; i++) {
             int j = i % KSize;
             if (hash[j] == null) {
-                hash[j] = PC[i];
+                hash[j] = bits[i];
             } else {
-                Bit xorProduce = hash[j].getValue() ^ PC[i].getValue() ? Bit.ONE : Bit.ZERO;
+                Bit xorProduce = hash[j].getValue() ^ bits[i].getValue() ? Bit.ONE : Bit.ZERO;
                 hash[j] = xorProduce;
 
             }
@@ -159,48 +144,5 @@ public class GAs implements BranchPredictor {
         Bit[] defaultBlock = new Bit[SC.getLength()];
         Arrays.fill(defaultBlock, Bit.ZERO);
         return defaultBlock;
-    }
-
-
-    public static void main(String[] args) {
-        GAs gas = new GAs(4, 2, 8, 4);
-
-        Bit[] opcode;
-        Bit[] instructionAddress;
-        Bit[] jumpAddress;
-
-        for (int i = 0; i < 250; i++) {
-
-
-            opcode = getRandomBitSerial(6);
-            instructionAddress = getRandomBitSerial(8);
-            jumpAddress = getRandomBitSerial(16);
-
-            BranchInstruction bi = new BranchInstruction(
-                    opcode,
-                    instructionAddress,
-                    jumpAddress
-            );
-
-            BranchResult br = getRandomBR();
-            //System.out.println("PC value is: " + Bit.arrayToString(bi.getInstructionAddress()) + " Branch result is: " + br);
-            BranchResult r = gas.predictAndUpdate(bi, br, false);
-        }
-
-        System.out.println(gas.monitor());
-
-    }
-
-    private static Bit[] getRandomBitSerial(int size) {
-        Bit[] rPC = new Bit[size];
-        for (int i = 0; i < size; i++) {
-            Bit b = Math.random() > 0.5 ? Bit.ONE : Bit.ZERO;
-            rPC[i] = b;
-        }
-        return rPC;
-    }
-
-    private static BranchResult getRandomBR() {
-        return Math.random() < 2 ? BranchResult.TAKEN : BranchResult.NOT_TAKEN;
     }
 }

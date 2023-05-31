@@ -11,9 +11,7 @@ import java.util.Arrays;
 
 public class PAg implements BranchPredictor {
     private final ShiftRegister SC; // saturating counter register
-
     private final RegisterBank PABHR; // per address branch history register
-
     private final Cache<Bit[], Bit[]> PHT; // page history table
 
     /**
@@ -25,7 +23,6 @@ public class PAg implements BranchPredictor {
      * @param branchInstructionSize the number of bits which is used for saving a branch instruction
      */
     public PAg(int BHRSize, int SCSize, int branchInstructionSize) {
-
         // Initialize the PABHR with the given bhr and branch instruction size
         PABHR = new RegisterBank(branchInstructionSize, BHRSize);
 
@@ -43,10 +40,10 @@ public class PAg implements BranchPredictor {
     @Override
     public BranchResult predict(BranchInstruction instruction) {
         // select the BHR based on branch instruction address
-        ShiftRegister correspondedBHR = PABHR.read(instruction.getInstructionAddress());
+        ShiftRegister correspondingBHR = PABHR.read(instruction.getInstructionAddress());
 
         // Get the associated block with the current value of the BHR register from the PHT
-        Bit[] cacheBlock = PHT.setDefault(correspondedBHR.read(), getDefaultBlock());
+        Bit[] cacheBlock = PHT.setDefault(correspondingBHR.read(), getDefaultBlock());
 
         // load the block into the register
         SC.load(cacheBlock);
@@ -79,19 +76,6 @@ public class PAg implements BranchPredictor {
         // update branch history
         correspondingBHR.insert(isTaken ? Bit.ONE : Bit.ZERO);
         PABHR.write(RBSelector, correspondingBHR.read());
-    }
-
-    public BranchResult predictAndUpdate(BranchInstruction branchInstruction, BranchResult actual, boolean debug) {
-        BranchResult br = predict(branchInstruction);
-        if (debug) {
-            System.out.println("The predication is : " + br);
-            System.out.println("Before Update: \n" + monitor());
-        }
-        update(branchInstruction, actual);
-        if (debug)
-            System.out.println("After Update: \n" + monitor());
-
-        return br;
     }
 
     /**
