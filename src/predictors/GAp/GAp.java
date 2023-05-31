@@ -10,27 +10,28 @@ import utils.CountMode;
 import java.util.Arrays;
 
 public class GAp implements BranchPredictor {
-    private final int PCMSize;
-    private final ShiftRegister SC; // saturating counter
+    private final int branchAddressSize;
+    private final ShiftRegister SC; // saturating counter register
     private final ShiftRegister BHR; // branch history register
     private final Cache<Bit[], Bit[]> PAPHT; // Per Address History Table
 
     /**
      * Creates a new GAp predictor with the given BHR register size and initializes the PAPHT based on
-     * the selected number of PC (branch address).
+     * the branch instruction length and saturating counter size
      *
-     * @param BHRSize       the size of the BHR register
-     * @param SCSize        the size of the register which hold the saturating counter value
-     * @param BranchAddress number bits which is used for saving a branch instruction
+     * @param BHRSize               the size of the BHR register
+     * @param SCSize                the size of the register which hold the saturating counter value
+     * @param branchInstructionSize the number of bits which is used for saving a branch instruction
      */
-    public GAp(int BHRSize, int SCSize, int BranchAddress) {
-        this.PCMSize = BranchAddress;
+    public GAp(int BHRSize, int SCSize, int branchInstructionSize) {
+        this.branchAddressSize = branchInstructionSize;
 
-        // Initialize the BHR register with the given size and null input
+        // Initialize the BHR register with the given size and no default value
         this.BHR = new SIPORegister("bhr", BHRSize, null);
 
-        // Initializing the PAPHT with PCMSize selector for PHT and 2^BHRSize row with SCSize as block size
-        PAPHT = new PerAddressPageHistoryTable(BranchAddress, (int) Math.pow(2, BHRSize), SCSize);
+        // Initializing the PAPHT with BranchInstructionSize as PHT Selector and 2^BHRSize row as each PHT entries
+        // number and SCSize as block size
+        PAPHT = new PerAddressPageHistoryTable(branchInstructionSize, (int) Math.pow(2, BHRSize), SCSize);
 
         // Initialize the SC register
         SC = new SIPORegister("sc", SCSize, null);
@@ -81,12 +82,15 @@ public class GAp implements BranchPredictor {
         BHR.insert(isTaken ? Bit.ONE : Bit.ZERO);
     }
 
-    public BranchResult predictAndUpdate(BranchInstruction branchInstruction, BranchResult actual) {
+    public BranchResult predictAndUpdate(BranchInstruction branchInstruction, BranchResult actual, boolean debug) {
         BranchResult br = predict(branchInstruction);
-        System.out.println("The predication is : " + br);
-        System.out.println("Before Update: \n" + monitor());
+        if (debug) {
+            System.out.println("The predication is : " + br);
+            System.out.println("Before Update: \n" + monitor());
+        }
         update(branchInstruction, actual);
-        System.out.println("After Update: \n" + monitor());
+        if (debug)
+            System.out.println("After Update: \n" + monitor());
 
         return br;
     }
@@ -98,14 +102,11 @@ public class GAp implements BranchPredictor {
      * @return concatenated value of first M bits of branch address and BHR
      */
     private Bit[] getCacheEntry(Bit[] branchAddress) {
-        // Get the PCMSize the least significant bits of the branch address
-        Bit[] pcmBits = Arrays.copyOfRange(branchAddress, 0, PCMSize);
-
-        // Concatenate the PCM bits with the BHR bits
+        // Concatenate the branch address bits with the BHR bits
         Bit[] bhrBits = BHR.read();
-        Bit[] cacheEntry = new Bit[pcmBits.length + bhrBits.length];
-        System.arraycopy(pcmBits, 0, cacheEntry, 0, pcmBits.length);
-        System.arraycopy(bhrBits, 0, cacheEntry, pcmBits.length, bhrBits.length);
+        Bit[] cacheEntry = new Bit[branchAddress.length + bhrBits.length];
+        System.arraycopy(branchAddress, 0, cacheEntry, 0, branchAddressSize);
+        System.arraycopy(bhrBits, 0, cacheEntry, branchAddress.length, bhrBits.length);
 
         return cacheEntry;
     }
@@ -126,17 +127,17 @@ public class GAp implements BranchPredictor {
 
 
     public static void main(String[] args) {
-        GAp gap = new GAp(4, 2, 32);
+        GAp gap = new GAp(4, 2, 4);
 
         Bit[] opcode;
         Bit[] instructionAddress;
         Bit[] jumpAddress;
 
-        for (int i = 0; i < 20; i++) {
+        for (int i = 0; i < 500; i++) {
 
 
             opcode = getRandomBitSerial(6);
-            instructionAddress = getRandomBitSerial(32);
+            instructionAddress = getRandomBitSerial(4);
             jumpAddress = getRandomBitSerial(26);
 
             BranchInstruction bi = new BranchInstruction(
@@ -146,10 +147,11 @@ public class GAp implements BranchPredictor {
             );
 
             BranchResult br = getRandomBR();
-            System.out.println("PC value is: " + Bit.arrayToString(bi.getInstructionAddress()) + " Branch result is: " + br);
-            BranchResult r = gap.predictAndUpdate(bi, br);
+             System.out.println("PC value is: " + Bit.arrayToString(bi.getInstructionAddress()) + " Branch result is: " + br);
+            BranchResult r = gap.predictAndUpdate(bi, br, true);
         }
 
+        System.out.println(gap.monitor());
 
     }
 

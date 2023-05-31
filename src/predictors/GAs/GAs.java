@@ -14,23 +14,32 @@ public class GAs implements BranchPredictor {
 
     private final int PCMSize;
     private final int KSize;
-    private final ShiftRegister SC; // saturating counter
+    private final ShiftRegister SC; // saturating counter register
     private final ShiftRegister BHR; // branch history register
     private final Cache<Bit[], Bit[]> PSPHT; // Per Set Predication History Table
 
 
-    public GAs(int BHRSize, int SCSize, int PCMSize, int KSize) {
-        this.PCMSize = PCMSize;
+    /**
+     * Creates a new GAs predictor with the given BHR register size and initializes the PAPHT based on
+     * the Ksize and saturating counter size
+     *
+     * @param BHRSize               the size of the BHR register
+     * @param SCSize                the size of the register which hold the saturating counter value
+     * @param branchInstructionSize the number of bits which is used for saving a branch instruction
+     */
+    public GAs(int BHRSize, int SCSize, int branchInstructionSize, int KSize) {
+        this.PCMSize = branchInstructionSize;
         this.KSize = KSize;
 
-        // Initialize the BHR register with the given size and null input
-        this.BHR = new SIPORegister("bhr", BHRSize, null);
+        // Initialize the BHR register with the given size and no default value
+        BHR = new SIPORegister("bhr", BHRSize, null);
 
-        // Initializing the PAPHT with PCMSize selector for PHT and 2^BHRSize row with SCSize as block size
+        // Initializing the PAPHT with K bit as PHT selector and 2^BHRSize row as each PHT entries
+        // number and SCSize as block size
         PSPHT = new PerAddressPageHistoryTable(KSize, (int) Math.pow(2, BHRSize), SCSize);
 
         // Initialize the saturating counter
-        SC = new SIPORegister("sc", PCMSize, null);
+        SC = new SIPORegister("sc", SCSize, null);
     }
 
     /**
@@ -80,12 +89,15 @@ public class GAs implements BranchPredictor {
         BHR.insert(isTaken ? Bit.ONE : Bit.ZERO);
     }
 
-    public BranchResult predictAndUpdate(BranchInstruction branchInstruction, BranchResult actual) {
+    public BranchResult predictAndUpdate(BranchInstruction branchInstruction, BranchResult actual, boolean debug) {
         BranchResult br = predict(branchInstruction);
-        System.out.println("The predication is : " + br);
-        System.out.println("Before Update: \n" + monitor());
+        if (debug) {
+            System.out.println("The predication is : " + br);
+            System.out.println("Before Update: \n" + monitor());
+        }
         update(branchInstruction, actual);
-        System.out.println("After Update: \n" + monitor());
+        if (debug)
+            System.out.println("After Update: \n" + monitor());
 
         return br;
     }
@@ -151,7 +163,7 @@ public class GAs implements BranchPredictor {
 
 
     public static void main(String[] args) {
-        GAs gas = new GAs(4, 2, 8, 5);
+        GAs gas = new GAs(4, 2, 8, 4);
 
         Bit[] opcode;
         Bit[] instructionAddress;
@@ -161,7 +173,7 @@ public class GAs implements BranchPredictor {
 
 
             opcode = getRandomBitSerial(6);
-            instructionAddress = getRandomBitSerial(10);
+            instructionAddress = getRandomBitSerial(8);
             jumpAddress = getRandomBitSerial(16);
 
             BranchInstruction bi = new BranchInstruction(
@@ -171,10 +183,11 @@ public class GAs implements BranchPredictor {
             );
 
             BranchResult br = getRandomBR();
-            System.out.println("PC value is: " + Bit.arrayToString(bi.getInstructionAddress()) + " Branch result is: " + br);
-            BranchResult r = gas.predictAndUpdate(bi, br);
+            //System.out.println("PC value is: " + Bit.arrayToString(bi.getInstructionAddress()) + " Branch result is: " + br);
+            BranchResult r = gas.predictAndUpdate(bi, br, false);
         }
 
+        System.out.println(gas.monitor());
 
     }
 
@@ -188,6 +201,6 @@ public class GAs implements BranchPredictor {
     }
 
     private static BranchResult getRandomBR() {
-        return Math.random() < 0.75 ? BranchResult.TAKEN : BranchResult.NOT_TAKEN;
+        return Math.random() < 2 ? BranchResult.TAKEN : BranchResult.NOT_TAKEN;
     }
 }

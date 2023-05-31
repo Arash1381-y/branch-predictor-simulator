@@ -12,20 +12,19 @@ import java.util.Arrays;
 public class GAg implements BranchPredictor {
     private final ShiftRegister BHR; // branch history register
     private final Cache<Bit[], Bit[]> PHT; // page history table
-
-    private final ShiftRegister SC; // saturated counter value
+    private final ShiftRegister SC; // saturated counter register
 
     /**
      * Creates a new GAg predictor with the given BHR register size and initializes the BHR and PHT.
      *
      * @param BHRSize the size of the BHR register
-     * @param SCSize  the size of the register which hold the saturating counter value
+     * @param SCSize  the size of the register which hold the saturating counter value and the cache block size
      */
     public GAg(int BHRSize, int SCSize) {
-        // Initialize the BHR register with the given size and null input
+        // Initialize the BHR register with the given size and no default value
         this.BHR = new SIPORegister("bhr", BHRSize, null);
 
-        // Initialize the PHT with a size of 2^size and each entry having a saturating counter of size "size"
+        // Initialize the PHT with a size of 2^size and each entry having a saturating counter of size "SCSize"
         PHT = new PageHistoryTable((int) Math.pow(2, BHRSize), SCSize);
 
         // Initialize the SC register
@@ -61,9 +60,6 @@ public class GAg implements BranchPredictor {
      */
     @Override
     public void update(BranchInstruction instruction, BranchResult actual) {
-        // get the cache value
-
-
         // check the predication result
         boolean isTaken = actual == BranchResult.TAKEN;
 
@@ -90,6 +86,9 @@ public class GAg implements BranchPredictor {
         return br;
     }
 
+    /**
+     * @return a zero series of bits as default value of cache block
+     */
     private Bit[] getDefaultBlock() {
         Bit[] defaultBlock = new Bit[SC.getLength()];
         Arrays.fill(defaultBlock, Bit.ZERO);
@@ -148,6 +147,6 @@ public class GAg implements BranchPredictor {
     }
 
     private static BranchResult getRandomBR() {
-        return Math.random() < 0.2 ? BranchResult.TAKEN : BranchResult.NOT_TAKEN;
+        return Math.random() < 0.4 ? BranchResult.TAKEN : BranchResult.NOT_TAKEN;
     }
 }
