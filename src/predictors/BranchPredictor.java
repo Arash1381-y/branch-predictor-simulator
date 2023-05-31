@@ -16,7 +16,7 @@ public interface BranchPredictor extends Monitorable {
      * The dynamic predictor will update its state based on the branch condition result
      *
      * @param instruction the branch instruction
-     * @param result      the actual result of branch (taken or not)
+     * @param actual      the actual result of branch (taken or not)
      */
-    void update(BranchInstruction instruction, BranchResult result);
+    void update(BranchInstruction instruction, BranchResult actual);
 }
